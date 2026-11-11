@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.toplevelrenovation.com/sitemap.xml
