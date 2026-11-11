@@ -277,7 +277,27 @@
       }
       return '';
     };
-    next.addEventListener('click', () => { const m = valid(); if (m) { err.textContent = m; buzz(30); return; } buzz(); go(stepN + 1); });
+    // Step 3 sends the request to /api/estimate (Pages Function, emails the office).
+    // If that fails, the visitor gets a prefilled email + the phone number so the lead isn't lost.
+    const send = async () => {
+      const f = quiz.elements, val = (n) => (f[n] && f[n].value || '').trim();
+      const pick = (n) => (quiz.querySelector(`[name=${n}]:checked`) || {}).value || '';
+      const data = { project: pick('project'), when: pick('when'), budget: pick('budget'), fullname: val('fullname'), phone: val('phone'),
+        email: val('email'), town: val('town'), notes: val('notes'), company: val('company'), page: location.pathname };
+      next.disabled = true; next.textContent = 'Sending…'; err.textContent = '';
+      try {
+        const r = await fetch('/api/estimate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!r.ok) throw new Error(r.status);
+        if (window.gtag) window.gtag('event', 'generate_lead', { form: 'estimate', project: data.project });
+        go(4);
+      } catch (x) {
+        const body = `Project: ${data.project}\nStart: ${data.when}\nBudget: ${data.budget}\nName: ${data.fullname}\nPhone: ${data.phone}\nEmail: ${data.email}\nTown: ${data.town}\n\n${data.notes}`;
+        const mail = 'mailto:' + (quiz.dataset.email || 'info@toplevelrenovation.com') + '?subject=' + encodeURIComponent('Free estimate request') + '&body=' + encodeURIComponent(body);
+        err.innerHTML = `Sorry, that didn't go through. <a href="${mail}">Email it to us</a> or call <a href="tel:7325389379">(732) 538-9379</a>.`;
+        buzz(30);
+      } finally { next.disabled = false; next.textContent = 'Request my free estimate'; }
+    };
+    next.addEventListener('click', () => { const m = valid(); if (m) { err.textContent = m; buzz(30); return; } buzz(); if (stepN === 3) send(); else go(stepN + 1); });
     back.addEventListener('click', () => go(stepN - 1));
     $$('[name=project]', quiz).forEach((r) => r.addEventListener('change', () => setTimeout(() => stepN === 1 && go(2), 260)));
     quiz.addEventListener('submit', (e) => e.preventDefault());

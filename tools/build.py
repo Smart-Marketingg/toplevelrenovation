@@ -72,7 +72,8 @@ def sheet():
 TICKER_ITEMS = ['★ 4.9 on Google · 89 reviews', f'Licensed &amp; insured · NJ HIC #{HIC}', 'One project manager, start to finish', 'BBB Accredited', 'Monmouth County · 15+ years']
 
 
-def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None):
+def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, noindex=False):
+    robots = '<meta name="robots" content="noindex">\n' if noindex else ''
     lds = ''.join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>\n' for x in ld)
     pre = ''.join(f'<link rel="preload" as="image" href="{h}"{m}>\n' for h, m in (preload or []))
     return f'''<!doctype html>
@@ -82,8 +83,7 @@ def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{e(title)}</title>
 <meta name="description" content="{e(desc)}">
-<meta name="robots" content="noindex, nofollow">
-<link rel="canonical" href="{DOMAIN}{path}">
+{robots}<link rel="canonical" href="{DOMAIN}{path}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(desc)}">
@@ -153,7 +153,8 @@ def estimate(preselect='', heading='Tell us about your project.', sub='Answer th
         </div>
       </fieldset>
       <div class="quiz__step quiz__done" data-step="4" hidden><div class="done__ic" aria-hidden="true">✓</div><h3>Thanks, we've got it.</h3>
-        <p>This is a preview site, so the form isn't connected yet. To reach the team today, call <a href="tel:{TEL}">{PHONE}</a>.</p></div>
+        <p>Our office will reach out to set up your free estimate. Need us sooner? Call <a href="tel:{TEL}">{PHONE}</a>.</p></div>
+      <input class="quiz__hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
       <p class="quiz__err" id="quizErr" role="alert"></p>
       <div class="quiz__nav"><button type="button" class="btn btn--line-light" id="quizBack" hidden>← Back</button><button type="button" class="btn btn--gold" id="quizNext">Next <span aria-hidden="true">→</span></button></div>
     </form>
@@ -517,7 +518,7 @@ def build_404():
   <div class="related__row related__row--text">{links}</div>
 </div></section>
 {estimate()}'''
-    h = head('Page not found | Top Level Renovation', 'This page could not be found.', '/404')
+    h = head('Page not found | Top Level Renovation', 'This page could not be found.', '/404', noindex=True)
     write('404.html', h + '\n' + top() + '\n' + body + '\n' + bottom())
 
 

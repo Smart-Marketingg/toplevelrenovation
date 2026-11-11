@@ -347,6 +347,7 @@ h2{font-size:var(--t-h2)}
 .quiz__nav .btn{flex:1}
 .quiz__nav .btn--line-light{color:var(--ink);border-color:var(--line);flex:0 0 auto}
 .quiz__done{text-align:center;padding:1.5rem 0}
+.quiz__hp{position:absolute!important;left:-10000px;width:1px;height:1px;opacity:0}
 .done__ic{width:64px;height:64px;border-radius:50%;margin:0 auto 1rem;background:var(--gold);display:grid;place-items:center;font:800 1.8rem var(--f-d)}
 .quiz__done h3{font-size:1.6rem;margin-bottom:.5rem}.quiz__done p{color:var(--mute)}.quiz__done a{font-weight:800}
 @media (min-width:640px){.opts{grid-template-columns:repeat(4,1fr)}.opts:not(.opts--row) span{justify-content:center;text-align:center;min-height:76px}.fields{grid-template-columns:1fr 1fr}.f--full{grid-column:1/-1}.quiz{padding:2rem}}
