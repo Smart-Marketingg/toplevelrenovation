@@ -77,7 +77,7 @@ def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, 
     title, desc = SEO.get(path, (title, desc))
     robots = '<meta name="robots" content="noindex">\n' if noindex else ''
     lds = ''.join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>\n' for x in ld)
-    pre = ''.join(f'<link rel="preload" as="image" href="{h}"{m}>\n' for h, m in (preload or []))
+    pre = ''.join(f'<link rel="preload" as="image" href="{h}" fetchpriority="high"{m}>\n' for h, m in (preload or []))
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -111,7 +111,7 @@ def top():
 <div class="ticker" aria-label="Highlights"><div class="ticker__track">{t}{t2}</div></div>
 <header class="hdr" id="hdr">
   <div class="hdr__in">
-    <a href="/" class="brand" aria-label="Top Level Renovation, home">
+    <a href="/" class="brand">
       <img src="/images/logo-mark.png" alt="" width="200" height="150">
       <span class="brand__word"><b>Top Level</b><small>Renovation, Inc.</small></span>
     </a>
@@ -332,9 +332,35 @@ def write(path, html_text):
     open(full, 'w').write(html_text)
 
 
+def mid_size(name):
+    """800px copy of /images/<name>.jpg for phones and small tiles (made once with sips)."""
+    src, dst = os.path.join(ROOT, 'images', name + '.jpg'), os.path.join(ROOT, 'images', name + '-m.jpg')
+    if not os.path.exists(dst):
+        import subprocess
+        subprocess.run(['sips', '-s', 'format', 'jpeg', '-s', 'formatOptions', '66', '-Z', '800', src, '--out', dst], capture_output=True)
+    return os.path.exists(dst)
+
+
+IMG_W = {}
+
+
+def responsive(html_text, sizes='(max-width: 760px) 92vw, 34vw'):
+    """Lazy /images/*.jpg get srcset=800w + original so phones and small tiles skip the full file."""
+    import re, subprocess
+    def fix(m):
+        tag, name = m.group(0), m.group(1)
+        if 'srcset=' in tag or not mid_size(name):
+            return tag
+        if name not in IMG_W:
+            out = subprocess.run(['sips', '-g', 'pixelWidth', os.path.join(ROOT, 'images', name + '.jpg')], capture_output=True, text=True).stdout
+            IMG_W[name] = int(out.split()[-1])
+        return tag.replace(f'src="/images/{name}.jpg"', f'src="/images/{name}.jpg" srcset="/images/{name}-m.jpg 800w, /images/{name}.jpg {IMG_W[name]}w" sizes="{sizes}"')
+    return re.sub(r'<img src="/images/([a-z0-9-]+)\.jpg"[^>]*loading="lazy"[^>]*>', fix, html_text)
+
+
 # ---------------------------------------------------------------- pages
 def build_home():
-    main = open(os.path.join(ROOT, 'tools', 'home_main.html')).read()
+    main = responsive(open(os.path.join(ROOT, 'tools', 'home_main.html')).read())
     h = head('Kitchen & Bathroom Remodeling Monmouth County NJ | Top Level Renovation',
              f"Monmouth County's 4.9-star remodeling team. Kitchens, bathrooms, whole-home renovations, additions, roofing and decks, designed and built by one team with one project manager. Licensed & insured, NJ HIC #{HIC}. Free estimates: {PHONE}.",
              '/', ld=[BUSINESS], preload=[('/images/hero-tall.jpg', ' media="(max-width: 760px)"'), ('/images/hero-wide.jpg', ' media="(min-width: 761px)"')])

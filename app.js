@@ -4,6 +4,16 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const buzz = (ms = 8) => { try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms); } catch (e) {} };
 
+  /* ---------- Deferred media: hidden hero slides + video posters load after the page ---------- */
+  const fillDeferred = () => {
+    $$('.hero__pic [data-src], .hero__pic [data-srcset]').forEach((el) => {
+      if (el.dataset.srcset) el.srcset = el.dataset.srcset;
+      if (el.dataset.src) el.src = el.dataset.src;
+    });
+    $$('video[data-poster]').forEach((v) => { v.poster = v.dataset.poster; });
+  };
+  if (document.readyState === 'complete') fillDeferred(); else addEventListener('load', fillDeferred, { once: true });
+
   /* ---------- Hero room switcher (homepage) ---------- */
   const hero = $('.hero'), word = $('#heroWord'), cap = $('#heroCap');
   const roomBtns = $$('.rooms [role=radio]');
