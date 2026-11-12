@@ -1,2 +1,11 @@
 /images/*
   Cache-Control: public, max-age=2592000
+
+/*
+  Strict-Transport-Security: max-age=31536000
+
+/styles.min.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/app.js
+  Cache-Control: public, max-age=31536000, immutable

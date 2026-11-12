@@ -23,6 +23,7 @@ BUSINESS = {"@context": "https://schema.org", "@type": "HomeAndConstructionBusin
   "image": DOMAIN + "/images/hero-wide.jpg", "logo": DOMAIN + "/images/logo-mark.png",
   "description": "Full-service remodeling company in Monmouth County, NJ: kitchens, bathrooms, whole-home renovations, additions, roofing, siding, decks and commercial work.",
   "address": {"@type": "PostalAddress", "streetAddress": "3411 Rose Ave", "addressLocality": "Ocean Township", "addressRegion": "NJ", "postalCode": "07712", "addressCountry": "US"},
+  "geo": {"@type": "GeoCoordinates", "latitude": 40.2410056, "longitude": -74.0446408},
   "areaServed": ["Monmouth County, NJ"] + [t + ", NJ" for t in TOWNS], "openingHours": "Mo-Fr 08:00-17:00",
   "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "89"},
   "sameAs": ["https://www.instagram.com/toplevelrenovation/"]}
@@ -35,6 +36,26 @@ def place(p):
 
 def thumb(slug, n=1):
     return f'/images/p/{slug}/{n:02d}-t.jpg'
+
+
+def asset_version(name):
+    import hashlib
+    return hashlib.md5(open(os.path.join(ROOT, name), 'rb').read()).hexdigest()[:8]
+
+
+def minify_css():
+    """styles.css -> styles.min.css (comments + whitespace stripped)."""
+    import re
+    css = open(os.path.join(ROOT, 'styles.css')).read()
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+    css = re.sub(r'\s+', ' ', css)
+    css = re.sub(r'\s*([{};,>])\s*', r'\1', css)
+    css = re.sub(r':\s+', ':', css).replace(';}', '}')
+    open(os.path.join(ROOT, 'styles.min.css'), 'w').write(css.strip() + '\n')
+
+
+minify_css()
+CSS_V, JS_V = asset_version('styles.min.css'), asset_version('app.js')
 
 
 # ---------------------------------------------------------------- layout
@@ -99,7 +120,7 @@ def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-{pre}<link rel="stylesheet" href="/styles.css">
+{pre}<link rel="stylesheet" href="/styles.min.css?v={CSS_V}">
 {lds}</head>'''
 
 
@@ -198,7 +219,7 @@ def bottom():
   <button class="lb__nav lb__next" data-lb="next" aria-label="Next photo">›</button>
   <span class="lb__count" id="lbCount"></span>
 </dialog>
-<script src="/app.js" defer></script>
+<script src="/app.js?v={JS_V}" defer></script>
 </body>
 </html>
 '''
