@@ -12,19 +12,23 @@ Built by Smart Marketing, October–November 2026. Every push to `main` deploys 
 - `_redirects`: old Wix URLs → new pages (301). `_headers`: long cache for `/images/*`.
 - `functions/_middleware.js`: `toplevelrenovation.com` → 301 to `https://www.toplevelrenovation.com`;
   adds `X-Robots-Tag: noindex` on `*.pages.dev` so preview copies stay out of Google.
-- `functions/api/estimate.js`: `POST /api/estimate` from the free-estimate quiz. Emails the request through Resend.
+- `functions/api/estimate.js`: `POST /api/estimate` from the free-estimate quiz → HighLevel webhook.
 
 ## Estimate form settings
+
+`functions/api/estimate.js` posts each request to HighLevel (Smart Marketing CRM, sub-account
+"Top Level Renovations"). Workflow "Website Estimate Form (toplevelrenovation.com)": Inbound Webhook →
+Create/Update contact (name, phone, email, city, source) → internal notification email to
+info@toplevelrenovation.com with project, start, budget, town and notes.
 
 Cloudflare → Workers & Pages → `toplevelrenovation` → Settings → Variables and Secrets (Production):
 
 | Name | Type | Value |
 | --- | --- | --- |
-| `RESEND_API_KEY` | Secret | Resend API key. Without it the form shows visitors a prefilled email link and the phone number instead. |
-| `LEAD_TO` | Text, optional | Comma-separated recipients. Default `info@toplevelrenovation.com`. |
-| `MAIL_FROM` | Text, optional | Default `Top Level Renovation Website <website@toplevelrenovation.com>`. The domain must be verified in Resend (its DNS records go in the Cloudflare zone; they don't touch the Outlook MX records). |
+| `HL_WEBHOOK_URL` | Secret | The workflow trigger's webhook URL (HighLevel → Automation → that workflow → Inbound Webhook). Without it the form shows visitors a prefilled email link and the phone number instead. |
 
-Redeploy after changing a variable.
+Redeploy after changing it. Payload fields: first_name, last_name, full_name, phone (E.164), email,
+town, project, timeline, budget, notes, page, source.
 
 ## DNS
 

@@ -1,14 +1,24 @@
-// POST /api/estimate: the free-estimate quiz. Emails the request to the office through Resend.
+// POST /api/estimate: the free-estimate quiz.
+//
+// Sends each request to HighLevel (Smart Marketing CRM, sub-account "Top Level Renovations").
+// The HighLevel workflow "Website Estimate Form (toplevelrenovation.com)" creates/updates the
+// contact and emails info@toplevelrenovation.com.
 //
 // Settings (Cloudflare Pages -> toplevelrenovation -> Settings -> Variables and Secrets, Production):
-//   RESEND_API_KEY  secret, required. Without it the endpoint answers 503 and the form shows
-//                   the visitor a prefilled email link + phone number instead.
-//   LEAD_TO         optional, comma-separated. Default info@toplevelrenovation.com
-//   MAIL_FROM       optional. Default "Top Level Renovation Website <website@toplevelrenovation.com>".
-//                   The domain must be verified in Resend.
+//   HL_WEBHOOK_URL  secret, required. The workflow's Inbound Webhook URL
+//                   (https://services.leadconnectorhq.com/hooks/.../webhook-trigger/...).
+//                   Without it the endpoint answers 503 and the form shows the visitor a
+//                   prefilled email link + phone number instead.
 const MAX = { project: 60, when: 40, budget: 40, fullname: 120, phone: 40, email: 160, town: 80, notes: 3000, page: 200 };
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+
+// US numbers -> E.164 so HighLevel matches/dedupes contacts by phone.
+const e164 = (raw) => {
+  const d = raw.replace(/\D/g, '');
+  if (d.length === 10) return '+1' + d;
+  if (d.length === 11 && d[0] === '1') return '+' + d;
+  return raw;
+};
 
 export async function onRequestPost({ request, env }) {
   const origin = request.headers.get('Origin');
@@ -25,33 +35,33 @@ export async function onRequestPost({ request, env }) {
   if (d.phone.replace(/\D/g, '').length < 10) return json({ ok: false, error: 'phone' }, 422);
   if (d.email && !/^\S+@\S+\.\S+$/.test(d.email)) d.email = '';
 
-  if (!env.RESEND_API_KEY) return json({ ok: false, error: 'not_configured' }, 503);
+  if (!env.HL_WEBHOOK_URL) return json({ ok: false, error: 'not_configured' }, 503);
 
-  const to = (env.LEAD_TO || 'info@toplevelrenovation.com').split(',').map((s) => s.trim()).filter(Boolean);
-  const rows = [
-    ['Project', d.project], ['Start', d.when], ['Budget', d.budget], ['Name', d.fullname], ['Phone', d.phone],
-    ['Email', d.email], ['Town', d.town], ['Notes', d.notes], ['Sent from', d.page],
-  ].filter(([, v]) => v);
-  const html = `<h2 style="font-family:Arial,sans-serif">New free-estimate request</h2>
-<table cellpadding="6" style="font-family:Arial,sans-serif;font-size:15px;border-collapse:collapse">${rows
-    .map(([k, v]) => `<tr><td style="color:#666;vertical-align:top"><b>${k}</b></td><td>${esc(v).replace(/\n/g, '<br>')}</td></tr>`).join('')}</table>
-<p style="font-family:Arial,sans-serif;color:#888;font-size:12px">Sent by the website form at www.toplevelrenovation.com</p>`;
-  const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n');
+  const parts = d.fullname.split(/\s+/);
+  const payload = {
+    first_name: parts[0],
+    last_name: parts.slice(1).join(' '),
+    full_name: d.fullname,
+    phone: e164(d.phone),
+    email: d.email,
+    town: d.town,
+    project: d.project,
+    timeline: d.when,
+    budget: d.budget,
+    notes: d.notes,
+    page: d.page,
+    source: 'Website estimate form',
+  };
 
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: env.MAIL_FROM || 'Top Level Renovation Website <website@toplevelrenovation.com>',
-      to,
-      reply_to: d.email || undefined,
-      subject: `Free estimate request: ${d.project || 'project'} - ${d.fullname}${d.town ? ' (' + d.town + ')' : ''}`,
-      html,
-      text,
-    }),
-  });
+  let r;
+  try {
+    r = await fetch(env.HL_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  } catch (err) {
+    console.log('highlevel_fetch_failed', String(err).slice(0, 200));
+    return json({ ok: false, error: 'send_failed' }, 502);
+  }
   if (!r.ok) {
-    console.log('resend_failed', r.status, (await r.text()).slice(0, 300));
+    console.log('highlevel_failed', r.status, (await r.text()).slice(0, 300));
     return json({ ok: false, error: 'send_failed' }, 502);
   }
   return json({ ok: true });
