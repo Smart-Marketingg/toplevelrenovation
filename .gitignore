@@ -2,3 +2,4 @@
 _*.html
 .wrangler/
 node_modules/
+__pycache__/

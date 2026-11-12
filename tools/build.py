@@ -7,6 +7,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from content import PHONE, TEL, EMAIL, HIC, REVIEWS, TOWNS, PROCESS, GENERAL_FAQ, SERVICES
 from projects import PROJECTS
+from seo_meta import SEO
 
 DOMAIN = 'https://www.toplevelrenovation.com'
 IMG = json.load(open(os.path.join(ROOT, 'tools', 'image-manifest.json')))
@@ -73,6 +74,7 @@ TICKER_ITEMS = ['★ 4.9 on Google · 89 reviews', f'Licensed &amp; insured · N
 
 
 def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, noindex=False):
+    title, desc = SEO.get(path, (title, desc))
     robots = '<meta name="robots" content="noindex">\n' if noindex else ''
     lds = ''.join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>\n' for x in ld)
     pre = ''.join(f'<link rel="preload" as="image" href="{h}"{m}>\n' for h, m in (preload or []))
@@ -89,6 +91,8 @@ def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, 
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:image" content="{DOMAIN}{image}">
 <meta property="og:url" content="{DOMAIN}{path}">
+<meta property="og:site_name" content="Top Level Renovation">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#121110">
 <link rel="icon" href="/images/logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
