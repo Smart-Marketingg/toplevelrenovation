@@ -7,6 +7,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from content import PHONE, TEL, EMAIL, HIC, REVIEWS, TOWNS, PROCESS, GENERAL_FAQ, SERVICES
 from projects import PROJECTS
+from seo_meta import SEO
 
 DOMAIN = 'https://www.toplevelrenovation.com'
 IMG = json.load(open(os.path.join(ROOT, 'tools', 'image-manifest.json')))
@@ -22,6 +23,7 @@ BUSINESS = {"@context": "https://schema.org", "@type": "HomeAndConstructionBusin
   "image": DOMAIN + "/images/hero-wide.jpg", "logo": DOMAIN + "/images/logo-mark.png",
   "description": "Full-service remodeling company in Monmouth County, NJ: kitchens, bathrooms, whole-home renovations, additions, roofing, siding, decks and commercial work.",
   "address": {"@type": "PostalAddress", "streetAddress": "3411 Rose Ave", "addressLocality": "Ocean Township", "addressRegion": "NJ", "postalCode": "07712", "addressCountry": "US"},
+  "geo": {"@type": "GeoCoordinates", "latitude": 40.2410056, "longitude": -74.0446408},
   "areaServed": ["Monmouth County, NJ"] + [t + ", NJ" for t in TOWNS], "openingHours": "Mo-Fr 08:00-17:00",
   "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "89"},
   "sameAs": ["https://www.instagram.com/toplevelrenovation/"]}
@@ -34,6 +36,26 @@ def place(p):
 
 def thumb(slug, n=1):
     return f'/images/p/{slug}/{n:02d}-t.jpg'
+
+
+def asset_version(name):
+    import hashlib
+    return hashlib.md5(open(os.path.join(ROOT, name), 'rb').read()).hexdigest()[:8]
+
+
+def minify_css():
+    """styles.css -> styles.min.css (comments + whitespace stripped)."""
+    import re
+    css = open(os.path.join(ROOT, 'styles.css')).read()
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+    css = re.sub(r'\s+', ' ', css)
+    css = re.sub(r'\s*([{};,>])\s*', r'\1', css)
+    css = re.sub(r':\s+', ':', css).replace(';}', '}')
+    open(os.path.join(ROOT, 'styles.min.css'), 'w').write(css.strip() + '\n')
+
+
+minify_css()
+CSS_V, JS_V = asset_version('styles.min.css'), asset_version('app.js')
 
 
 # ---------------------------------------------------------------- layout
@@ -73,9 +95,10 @@ TICKER_ITEMS = ['★ 4.9 on Google · 89 reviews', f'Licensed &amp; insured · N
 
 
 def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, noindex=False):
+    title, desc = SEO.get(path, (title, desc))
     robots = '<meta name="robots" content="noindex">\n' if noindex else ''
     lds = ''.join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>\n' for x in ld)
-    pre = ''.join(f'<link rel="preload" as="image" href="{h}"{m}>\n' for h, m in (preload or []))
+    pre = ''.join(f'<link rel="preload" as="image" href="{h}" fetchpriority="high"{m}>\n' for h, m in (preload or []))
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -89,12 +112,15 @@ def head(title, desc, path, image='/images/hero-wide.jpg', ld=(), preload=None, 
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:image" content="{DOMAIN}{image}">
 <meta property="og:url" content="{DOMAIN}{path}">
+<meta property="og:site_name" content="Top Level Renovation">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#121110">
+<meta name="msvalidate.01" content="01EE81F0634FB072ED6D6E053B369582">
 <link rel="icon" href="/images/logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-{pre}<link rel="stylesheet" href="/styles.css">
+{pre}<link rel="stylesheet" href="/styles.min.css?v={CSS_V}">
 {lds}</head>'''
 
 
@@ -106,7 +132,7 @@ def top():
 <div class="ticker" aria-label="Highlights"><div class="ticker__track">{t}{t2}</div></div>
 <header class="hdr" id="hdr">
   <div class="hdr__in">
-    <a href="/" class="brand" aria-label="Top Level Renovation, home">
+    <a href="/" class="brand">
       <img src="/images/logo-mark.png" alt="" width="200" height="150">
       <span class="brand__word"><b>Top Level</b><small>Renovation, Inc.</small></span>
     </a>
@@ -193,7 +219,7 @@ def bottom():
   <button class="lb__nav lb__next" data-lb="next" aria-label="Next photo">›</button>
   <span class="lb__count" id="lbCount"></span>
 </dialog>
-<script src="/app.js" defer></script>
+<script src="/app.js?v={JS_V}" defer></script>
 </body>
 </html>
 '''
@@ -327,9 +353,35 @@ def write(path, html_text):
     open(full, 'w').write(html_text)
 
 
+def mid_size(name):
+    """800px copy of /images/<name>.jpg for phones and small tiles (made once with sips)."""
+    src, dst = os.path.join(ROOT, 'images', name + '.jpg'), os.path.join(ROOT, 'images', name + '-m.jpg')
+    if not os.path.exists(dst):
+        import subprocess
+        subprocess.run(['sips', '-s', 'format', 'jpeg', '-s', 'formatOptions', '66', '-Z', '800', src, '--out', dst], capture_output=True)
+    return os.path.exists(dst)
+
+
+IMG_W = {}
+
+
+def responsive(html_text, sizes='(max-width: 760px) 92vw, 34vw'):
+    """Lazy /images/*.jpg get srcset=800w + original so phones and small tiles skip the full file."""
+    import re, subprocess
+    def fix(m):
+        tag, name = m.group(0), m.group(1)
+        if 'srcset=' in tag or not mid_size(name):
+            return tag
+        if name not in IMG_W:
+            out = subprocess.run(['sips', '-g', 'pixelWidth', os.path.join(ROOT, 'images', name + '.jpg')], capture_output=True, text=True).stdout
+            IMG_W[name] = int(out.split()[-1])
+        return tag.replace(f'src="/images/{name}.jpg"', f'src="/images/{name}.jpg" srcset="/images/{name}-m.jpg 800w, /images/{name}.jpg {IMG_W[name]}w" sizes="{sizes}"')
+    return re.sub(r'<img src="/images/([a-z0-9-]+)\.jpg"[^>]*loading="lazy"[^>]*>', fix, html_text)
+
+
 # ---------------------------------------------------------------- pages
 def build_home():
-    main = open(os.path.join(ROOT, 'tools', 'home_main.html')).read()
+    main = responsive(open(os.path.join(ROOT, 'tools', 'home_main.html')).read())
     h = head('Kitchen & Bathroom Remodeling Monmouth County NJ | Top Level Renovation',
              f"Monmouth County's 4.9-star remodeling team. Kitchens, bathrooms, whole-home renovations, additions, roofing and decks, designed and built by one team with one project manager. Licensed & insured, NJ HIC #{HIC}. Free estimates: {PHONE}.",
              '/', ld=[BUSINESS], preload=[('/images/hero-tall.jpg', ' media="(max-width: 760px)"'), ('/images/hero-wide.jpg', ' media="(min-width: 761px)"')])

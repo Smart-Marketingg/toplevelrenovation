@@ -6,12 +6,12 @@
       <img src="/images/hero-wide.jpg" alt="" fetchpriority="high">
     </picture>
     <picture class="hero__pic" data-for="bath">
-      <source media="(max-width: 760px)" srcset="images/seaview-bath.jpg">
-      <img src="/images/nm-bath-tub.jpg" alt="" loading="lazy">
+      <source media="(max-width: 760px)" data-srcset="/images/seaview-bath.jpg">
+      <img data-src="/images/nm-bath-tub.jpg" alt="">
     </picture>
     <picture class="hero__pic" data-for="home">
-      <source media="(max-width: 760px)" srcset="images/kim-door.jpg">
-      <img src="/images/poplar-open.jpg" alt="" loading="lazy">
+      <source media="(max-width: 760px)" data-srcset="/images/kim-door.jpg">
+      <img data-src="/images/poplar-open.jpg" alt="">
     </picture>
   </div>
   <div class="hero__shade" aria-hidden="true"></div>
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <a class="rating-card" href="#reviews" aria-label="Rated 4.9 out of 5 from 89 Google reviews. Read reviews">
+  <a class="rating-card" href="#reviews">
     <span class="rating-card__g" aria-hidden="true">G</span>
     <span><b>4.9</b> <span class="stars" aria-hidden="true">★★★★★</span><small>89 Google reviews</small></span>
   </a>
@@ -145,17 +145,17 @@
     </div>
     <div class="reel-row" id="reelRow">
       <figure class="reel" data-reveal>
-        <video preload="none" muted playsinline loop poster="/images/ann-kitchen.jpg" src="/video/reel-ann-court.mp4" aria-label="Kitchen before and after video"></video>
+        <video preload="none" muted playsinline loop data-poster="/images/ann-kitchen-m.jpg" src="/video/reel-ann-court.mp4" aria-label="Kitchen before and after video"></video>
         <button class="reel__play" aria-label="Play kitchen before and after video"><span aria-hidden="true">▶</span></button>
         <figcaption><b>Kitchen before &amp; after</b><small>June 2026 · 12 sec</small></figcaption>
       </figure>
       <figure class="reel" data-reveal>
-        <video preload="none" muted playsinline loop poster="/images/harbour-island.jpg" src="/video/reel-harbour.mp4" aria-label="Gut renovation from bare studs to finished kitchen video"></video>
+        <video preload="none" muted playsinline loop data-poster="/images/harbour-island-m.jpg" src="/video/reel-harbour.mp4" aria-label="Gut renovation from bare studs to finished kitchen video"></video>
         <button class="reel__play" aria-label="Play studs-to-finish kitchen video"><span aria-hidden="true">▶</span></button>
         <figcaption><b>Studs to finished kitchen</b><small>Jan 2026 · 21 sec</small></figcaption>
       </figure>
       <figure class="reel" data-reveal>
-        <video preload="none" muted playsinline loop poster="/images/nm-vanity.jpg" src="/video/reel-new-monmouth.mp4" aria-label="Primary bath reveal video"></video>
+        <video preload="none" muted playsinline loop data-poster="/images/nm-vanity-m.jpg" src="/video/reel-new-monmouth.mp4" aria-label="Primary bath reveal video"></video>
         <button class="reel__play" aria-label="Play primary bath reveal video"><span aria-hidden="true">▶</span></button>
         <figcaption><b>Spa bath reveal</b><small>Aug 2026</small></figcaption>
       </figure>
