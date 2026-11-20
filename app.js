@@ -134,11 +134,11 @@
   const ptabs = $$('.ptabs [role=tab]');
   if (ba && baR && ptabs.length) {
     const sets = {
-      kitchen: { b: '/images/ba26-kitchen-before.jpg', a: '/images/ba26-kitchen-after.jpg', bAlt: 'Before: the same galley kitchen with white cabinets and tile floor', aAlt: 'After: galley kitchen with navy and light-blue shaker cabinets',
+      kitchen: { b: '/images/ba26-kitchen-before.webp', a: '/images/ba26-kitchen-after.webp', bAlt: 'Before: the same galley kitchen with white cabinets and tile floor', aAlt: 'After: galley kitchen with navy and light-blue shaker cabinets',
         note: 'White laminate and tile floors out; navy and soft-blue shaker cabinets, a farmhouse sink, brass hardware and new plank flooring in.' },
-      bath: { b: '/images/ba26-bath-before.jpg', a: '/images/ba26-bath-after.jpg', bAlt: 'Before: primary bath with a tiled tub deck and yellow walls', aAlt: 'After: freestanding tub, floating wood vanity with lit mirrors',
+      bath: { b: '/images/ba26-bath-before.webp', a: '/images/ba26-bath-after.webp', bAlt: 'Before: primary bath with a tiled tub deck and yellow walls', aAlt: 'After: freestanding tub, floating wood vanity with lit mirrors',
         note: 'The built-in tub deck and brass-framed shower came out; a freestanding tub, floating wood vanity with backlit mirrors and a fluted walk-in shower went in.' },
-      gut: { b: '/images/ba26-gut-before.jpg', a: '/images/ba26-gut-after.jpg', bAlt: 'Before: the house gutted down to bare studs and subfloor', aAlt: 'After: finished open kitchen with a large island',
+      gut: { b: '/images/ba26-gut-before.webp', a: '/images/ba26-gut-after.webp', bAlt: 'Before: the house gutted down to bare studs and subfloor', aAlt: 'After: finished open kitchen with a large island',
         note: 'Taken down to the studs, then rebuilt: framing, plumbing, electric, drywall, cabinetry and a big island, all managed by one team.' },
       roof: { note: 'A full tear-off on a waterfront home in Oceanport, shot by drone: the old roof, stripped to the deck, and finished.' }
     };
