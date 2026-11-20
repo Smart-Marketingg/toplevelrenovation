@@ -30,7 +30,7 @@ h2{font-size:var(--t-h2)}
 .wrap{width:min(1240px,100% - 2*var(--g));margin-inline:auto}
 .gold{color:var(--gold)}
 .u{background:linear-gradient(transparent 62%,rgba(246,174,45,.55) 62% 90%,transparent 90%);padding-inline:.04em}
-.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:800 .74rem/1 var(--f-b);letter-spacing:.18em;text-transform:uppercase;color:var(--gold-d);margin-bottom:1.1rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:800 .74rem/1 var(--f-b);letter-spacing:.18em;text-transform:uppercase;color:#8f5d00;margin-bottom:1.1rem}
 .eyebrow::before{content:"";width:22px;height:2px;background:currentColor}
 .eyebrow--light{color:var(--gold)}
 .lede{font-size:var(--t-lede);color:var(--mute);max-width:36rem;margin-top:1.1rem}
