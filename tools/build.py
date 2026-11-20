@@ -347,7 +347,19 @@ def areas_block():
   <ul class="towns">{t}</ul></div></section>'''
 
 
+def use_webp(html_text):
+    """Point image references at the .webp made by tools/make_webp.py when it exists.
+    Absolute URLs (og:image, schema) keep the .jpg."""
+    import re
+    def fix(m):
+        rel = m.group(2).lstrip('/')
+        return m.group(1) + m.group(2)[:-4] + '.webp' if os.path.exists(os.path.join(ROOT, rel[:-4] + '.webp')) else m.group(0)
+    return re.sub(r'(["\'( ,])(/?images/[\w/-]+\.jpg)', fix, html_text)
+
+
 def write(path, html_text):
+    if path.endswith('.html'):
+        html_text = use_webp(html_text)
     full = os.path.join(ROOT, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
     open(full, 'w').write(html_text)
